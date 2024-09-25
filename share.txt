@@ -1,22 +1,50 @@
-private static void trustAllCertificates() throws Exception {
-    // Tạo một TrustManager tùy chỉnh, bỏ qua việc kiểm tra chứng chỉ
-    TrustManager[] trustAllCerts = new TrustManager[] {
-        new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() { return null; }
+import javax.xml.namespace.QName;
+import javax.xml.ws.Service;
+import javax.net.ssl.*;
+import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 
-            public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+public class UnsafeSoapHttpsClient {
+    public static void main(String[] args) {
+        try {
+            // Bỏ qua kiểm tra chứng chỉ SSL (không an toàn)
+            trustAllCertificates();
 
-            public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+            // URL của WSDL từ dịch vụ HTTPS
+            URL wsdlURL = new URL("https://example.com/service?wsdl");
+
+            // Tên không gian và tên dịch vụ
+            QName SERVICE_NAME = new QName("http://example.com/", "MyService");
+
+            // Tạo service
+            Service service = Service.create(wsdlURL, SERVICE_NAME);
+
+            // Tạo proxy đến service
+            MyServiceInterface port = service.getPort(MyServiceInterface.class);
+
+            // Gọi phương thức từ dịch vụ web
+            String response = port.myWebMethod("Hello");
+            System.out.println("Response from service: " + response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    };
+    }
 
-    // Tạo SSLContext sử dụng TrustManager tùy chỉnh
-    SSLContext sc = SSLContext.getInstance("SSL");
-    sc.init(null, trustAllCerts, new SecureRandom());
+    // Phương thức bỏ qua kiểm tra chứng chỉ SSL
+    private static void trustAllCertificates() throws Exception {
+        TrustManager[] trustAllCerts = new TrustManager[] {
+            new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() { return null; }
+                public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+                public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+            }
+        };
 
-    // Thiết lập SSLContext như mặc định cho HttpsURLConnection
-    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-    // Thiết lập bỏ qua xác thực tên miền (hostname verification)
-    HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+    }
 }
