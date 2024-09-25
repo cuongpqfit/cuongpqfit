@@ -1,0 +1,22 @@
+private static void trustAllCertificates() throws Exception {
+    // Tạo một TrustManager tùy chỉnh, bỏ qua việc kiểm tra chứng chỉ
+    TrustManager[] trustAllCerts = new TrustManager[] {
+        new X509TrustManager() {
+            public X509Certificate[] getAcceptedIssuers() { return null; }
+
+            public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+
+            public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+        }
+    };
+
+    // Tạo SSLContext sử dụng TrustManager tùy chỉnh
+    SSLContext sc = SSLContext.getInstance("SSL");
+    sc.init(null, trustAllCerts, new SecureRandom());
+
+    // Thiết lập SSLContext như mặc định cho HttpsURLConnection
+    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+    // Thiết lập bỏ qua xác thực tên miền (hostname verification)
+    HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+}
