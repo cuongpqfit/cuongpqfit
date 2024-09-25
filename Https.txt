@@ -1,0 +1,64 @@
+import javax.xml.soap.*;
+import java.net.URL;
+import javax.net.ssl.*;
+
+public class SOAPClientWithHTTPS {
+    public static void main(String[] args) throws Exception {
+        // Bỏ qua kiểm tra chứng chỉ SSL (cho chứng chỉ tự ký)
+        disableSSLValidation(); // Tùy chọn, nếu bạn sử dụng chứng chỉ tự ký
+
+        // Thay đổi endpoint thành HTTPS URL
+        URL endpoint = new URL("https://yourserviceurl");
+        SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+        SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+        // Tạo yêu cầu SOAP
+        SOAPMessage soapRequest = createSOAPRequest();
+
+        // Gửi yêu cầu và nhận phản hồi
+        SOAPMessage soapResponse = soapConnection.call(soapRequest, endpoint);
+
+        // Xử lý phản hồi
+        soapResponse.writeTo(System.out);
+
+        // Đóng kết nối SOAP
+        soapConnection.close();
+    }
+
+    private static SOAPMessage createSOAPRequest() throws Exception {
+        // Tạo yêu cầu SOAP
+        // ...
+        return null;
+    }
+
+    // Tùy chọn: Tắt xác thực SSL cho môi trường phát triển nếu chứng chỉ là self-signed
+    private static void disableSSLValidation() throws Exception {
+        TrustManager[] trustAllCerts = new TrustManager[] {
+            new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                public void checkClientTrusted(
+                        java.security.cert.X509Certificate[] certs, String authType) {
+                }
+                public void checkServerTrusted(
+                        java.security.cert.X509Certificate[] certs, String authType) {
+                }
+            }
+        };
+
+        // Cài đặt TrustManager để bỏ qua chứng chỉ
+        SSLContext sc = SSLContext.getInstance("TLS");
+        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+        // Bỏ qua hostname verification
+        HttpsURLConnection.setDefaultHostnameVerifier(
+            new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            }
+        );
+    }
+}
