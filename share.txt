@@ -1,37 +1,43 @@
 #!/bin/bash
 
+# Danh sách các thư mục logs (có thể cấu hình tại đây)
+LOG_FOLDERS=("logs1" "logs2" "logs3" "logs4") # Chỉnh sửa danh sách này để thêm/xóa thư mục
+
 # Lấy thời gian hiện tại theo định dạng HH:MM:SS
 current_time=$(date +%H:%M:%S)
 
-# So sánh thời gian hiện tại với 16:00:00
+# Kiểm tra thời gian hiện tại có lớn hơn 16:00:00 không
 if [[ "$current_time" > "16:00:00" ]]; then
     # Lấy thư mục chứa script
     script_dir=$(dirname "$0")
     
-    # Đường dẫn thư mục logs và backup_logs
-    logs_dir="$script_dir/logs"
-    backup_dir="$script_dir/backup_logs"
-    
-    # Kiểm tra và tạo thư mục backup_logs nếu chưa tồn tại
-    if [[ ! -d "$backup_dir" ]]; then
-        mkdir -p "$backup_dir"
-    fi
-    
-    # Kiểm tra xem thư mục logs có tồn tại và có file không
-    if [[ -d "$logs_dir" ]]; then
-        # Duyệt qua từng file trong thư mục logs
-        for file in "$logs_dir"/*; do
-            # Kiểm tra xem file có tồn tại và là file thông thường
-            if [[ -f "$file" ]]; then
-                # Lấy tên file gốc (không bao gồm đường dẫn)
-                filename=$(basename "$file")
-                
-                # Tạo tên file mới với định dạng yyyymmdd_h:i:s_filename
-                new_filename=$(date +%Y%m%d_%H:%M:%S)_"$filename"
-                
-                # Di chuyển và đổi tên file sang thư mục backup_logs
-                mv "$file" "$backup_dir/$new_filename"
-            fi
-        done
-    fi
+    # Duyệt qua từng thư mục trong mảng LOG_FOLDERS
+    for folder in "${LOG_FOLDERS[@]}"; do
+        # Đường dẫn thư mục logs và backup tương ứng
+        logs_dir="$script_dir/$folder/logs"
+        backup_dir="$script_dir/$folder/backup"
+        
+        # Kiểm tra và tạo thư mục backup nếu chưa tồn tại
+        if [[ ! -d "$backup_dir" ]]; then
+            mkdir -p "$backup_dir"
+        fi
+        
+        # Kiểm tra xem thư mục logs có tồn tại và có file không
+        if [[ -d "$logs_dir" ]]; then
+            # Duyệt qua từng file trong thư mục logs
+            for file in "$logs_dir"/*; do
+                # Kiểm tra xem file có tồn tại và là file thông thường
+                if [[ -f "$file" ]]; then
+                    # Lấy tên file gốc (không bao gồm đường dẫn)
+                    filename=$(basename "$file")
+                    
+                    # Tạo tên file mới với định dạng yyyymmdd_h:i:s_filename
+                    new_filename=$(date +%Y%m%d_%H:%M:%S)_"$filename"
+                    
+                    # Di chuyển và đổi tên file sang thư mục backup
+                    mv "$file" "$backup_dir/$new_filename"
+                fi
+            done
+        fi
+    done
 fi
